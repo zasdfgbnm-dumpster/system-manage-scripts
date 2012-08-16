@@ -1,0 +1,5 @@
+#!/bin/bash
+mount -t proc none $1/proc
+mount -t sysfs none $1/sys
+mount -o bind /dev $1/dev
+chroot $1
