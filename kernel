@@ -1,0 +1,41 @@
+#!/bin/bash
+
+rebuild_post(){
+	# rebuild third party kernel modules
+	echo "nothing to do now" > /dev/null
+}
+
+case $1 in
+config)
+	cd /usr/src/linux
+	cp /root/kernel/config .config
+	make oldconfig
+	make menuconfig 
+	dialog --yesno "Use new config?" 5 20 && cp .config /root/kernel/config
+	clear
+	;;
+rebuild)
+	# remove existing kernel
+	rm /boot/vmlinuz*
+	rm /boot/config*
+	rm /boot/System.map*
+	rm -rf /lib/modules/*
+	# clean source directory
+	cd /usr/src/linux
+	make mrproper
+	# copy kernel config file
+	cp /root/kernel/config .config
+	# build and install
+	make -j5
+	make install
+	make modules_install
+	# regenerate grub.cfg
+	grub2-mkconfig -o /boot/grub2/grub.cfg
+	# do rebuild_post
+	rebuild_post
+	;;
+*)
+	echo "Bad parameter" >&2
+	exit 1
+	;;
+esac
