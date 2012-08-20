@@ -1,5 +1,7 @@
 #!/bin/bash
 
+STORED_CONFIG_FILE=/root/kernel/config
+
 rebuild_post(){
 	# rebuild third party kernel modules
 	echo "nothing to do now" > /dev/null
@@ -8,10 +10,10 @@ rebuild_post(){
 case $1 in
 config)
 	cd /usr/src/linux
-	cp /root/kernel/config .config
+	cp "${STORED_CONFIG_FILE}" .config
 	make oldconfig
 	make menuconfig 
-	dialog --yesno "Use new config?" 5 20 && cp .config /root/kernel/config
+	dialog --yesno "Use new config?" 5 20 && cp .config "${STORED_CONFIG_FILE}"
 	clear
 	;;
 rebuild)
@@ -24,7 +26,7 @@ rebuild)
 	cd /usr/src/linux
 	make mrproper
 	# copy kernel config file
-	cp /root/kernel/config .config
+	cp "${STORED_CONFIG_FILE}" .config
 	# build and install
 	make -j5
 	make install
