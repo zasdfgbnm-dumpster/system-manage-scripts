@@ -1,0 +1,6 @@
+#!/bin/bash
+HOSTS_DIR=/root/hosts
+case $1 in
+update)
+	find $HOSTS_DIR -maxdepth 1 -mindepth 1 -type d -exec sh -c "cd {}; [ -d .svn ] && svn update; [ -d .git ] && git pull; [ -d .hg ] && hg pull" \;
+esac
