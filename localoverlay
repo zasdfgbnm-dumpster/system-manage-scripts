@@ -116,7 +116,12 @@ new)
 		exit 0
 	fi
 	# not help
-	mkdir -p $LOCAL_OVERLAY_DIR/$3
+	if echo "$2"|egrep '^[a-zA-Z0-9_-]+/[a-zA-Z0-9_-]+$' ; then
+		mkdir -p $LOCAL_OVERLAY_DIR/$2
+	else
+		echo 'Bad parameter.'>&2
+		exit 1
+	fi
 	;;
 update)
 	# display help
