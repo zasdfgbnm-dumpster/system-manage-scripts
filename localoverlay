@@ -1,0 +1,178 @@
+#!/bin/bash
+
+REMOTE_REPO_DIR=/root/remote-overlay
+LOCAL_OVERLAY_DIR=/root/overlay
+LOCAL_DISABLED_OVERLAY_DIR=/root/disabled-overlay
+PORTAGE_DIR=/usr/portage
+
+case $1 in
+help)
+	# show help content
+	echo 'Usage:'
+	echo ' localoverlay <command> [<parameters>]'
+	echo 'Where command can be:'
+	echo ' remote : manage remote repository'
+	echo ' add :    add package to local overlay from remote repository'
+	echo ' new :    create an empty package to local overlay'
+	echo ' clone :  clone a package from remote repository or portage to local overlay'
+	echo ' delete : delete a package in local overlay'
+	echo ' update : Update remote repository together with packages added to local overlay using "localoverlay add"'
+	echo ' disable : disable a package in local overlay without delete it'
+	echo ' enable : enable a disabled package in local overlay'
+	echo 'For more information use:'
+	echo ' localoverlay <command> help'
+	;;
+remote)
+	case $2 in
+	help)
+		#show help
+		echo 'Manage remote repository.'
+		echo 'Usage:'
+		echo ' To add a remote repository:'
+		echo '  localoverlay remote add git|hg|svn <repository> [directory]'
+		echo ' To remove a remote repository:'
+		echo '  localoverlay remote delete <directory>'
+		echo 'Example:'
+		echo ' localoverlay remote add git git://gitorious.org/roslin/roslin.git'
+		echo ' localoverlay remote add git git://github.com/cschwan/sage-on-gentoo.git sage'
+		echo ' localoverlay remote delete roslin'
+		echo ' localoverlay remote delete sage'
+		;;
+
+	add)
+		cd $REMOTE_REPO_DIR
+		case $3 in
+		git|hg)
+			$3 clone $4 $5
+			;;
+		svn)
+			svn checkout $4 $5
+			;;
+		*)
+			echo 'Not supported VCS'
+			exit 1
+		esac
+		;;
+	delete)
+		# do safety check to prevent something like 'rm -rf /' and do delete directory
+		cd $REMOTE_REPO_DIR
+		echo "$3"|egrep '^[a-zA-Z0-9_-]+$' && [ -d $3 ] && rm -rf $3
+		;;
+	*)
+		echo 'Bad parameter' >&2
+		exit 1
+	esac
+	;;
+add)
+	#show help
+	if [ "$2" = "help" ] ; then
+		echo 'Add package from remote repo, which must have been added through localoverlay remote.'
+		echo 'The package in localoverlay will be automatically update with remote repository.'
+		echo 'Usage:'
+		echo ' localoverlay add <repo_dir> <full_package_name>'
+		echo 'Example:'
+		echo ' localoverlay add roslin games-arcade/supertux'
+		exit 0
+	fi
+	#not help
+	if [ -d $REMOTE_REPO_DIR/$2/$3 ]  ; then
+		mkdir -p $(dirname $LOCAL_OVERLAY_DIR/$3)
+		ln -s $REMOTE_REPO_DIR/$2/$3 $LOCAL_OVERLAY_DIR/$3
+	else
+		echo 'repo or package not exist' >&2
+		exit 1
+	fi
+	;;
+clone)
+	# show help
+	if [ "$2" = "help" ] ; then
+		echo 'Clone a package from remote repository or portage to local overlay.'
+		echo 'Usage:'
+		echo ' localoverlay clone portage|<repo_dir> <full_package_name>'
+		echo 'Example:'
+		echo ' localoverlay clone portage dev-vcs/subversion'
+		echo ' localoverlay clone roslin games-arcade/supertux'
+		exit 0
+	fi
+	# not help
+	if [ "$2" = "portage" ] ; then
+		SOURCE_DIR=$PORTAGE_DIR
+	else
+		SOURCE_DIR=$REMOTE_REPO_DIR/$2
+	fi
+	if [ -d $SOURCE_DIR/$3 ] ; then
+		mkdir -p $(dirname $LOCAL_OVERLAY_DIR/$3)
+		cp -r $SOURCE_DIR/$3 $LOCAL_OVERLAY_DIR/$3
+	fi
+	;;
+new)
+	# show help
+	if [ "$2" = "help" ] ; then
+		echo 'Create an empty package to local overlay.'
+		echo 'Usage:'
+		echo ' localoverlay new <full_package_name>'
+		echo 'Example:'
+		echo ' localoverlay new game-arcade/supertux'
+		exit 0
+	fi
+	# not help
+	mkdir -p $LOCAL_OVERLAY_DIR/$3
+	;;
+update)
+	# display help
+	if [ "$2" = "help" ] ; then
+		echo 'Update remote repository together with packages added to local overlay using "localoverlay add"'
+		echo 'Usage:'
+		echo ' localoverlay update'
+		exit 0
+	fi
+	# update remote source
+	find $REMOTE_REPO_DIR -maxdepth 1 -mindepth 1 -type d -exec sh -c "cd {}; [ -d .svn ] && svn update; [ -d .git ] && git pull; [ -d .hg ] && hg pull" \;
+	;;
+delete)
+	if [ "$2" = "help" ] ; then
+		echo 'Delete package in local overlay, both enabled and disabled'
+		echo 'Usage:'
+		echo ' localoverlay delete <full_package_name>'
+		echo 'Example:'
+		echo ' localoverlay delete game-arcade/supertux'
+		exit 0
+	fi
+	# do safety check and delete package
+	if echo "$2"|egrep '^[a-zA-Z0-9_-]+/[a-zA-Z0-9_-]+$' ; then
+		[ -d $LOCAL_OVERLAY_DIR/$2 ] && rm -rf $LOCAL_OVERLAY_DIR/$2 
+		[ -d $LOCAL_DISABLED_OVERLAY_DIR/$2 ] && rm -rf $LOCAL_DISABLED_OVERLAY_DIR/$2 
+	fi
+	;;
+enable)
+	# display help
+	if [ "$2" = "help" ] ; then
+		echo 'Enable a disabled package in local overlay'
+		echo 'Usage:'
+		echo ' localoverlay enable <full_package_name>'
+		echo 'Example:'
+		echo ' localoverlay enable game-arcade/supertux'
+		exit 0
+	fi
+	# not help
+	mkdir -p $(dirname $LOCAL_OVERLAY_DIR/$2)
+	[ -d $LOCAL_DISABLED_OVERLAY_DIR/$2 ] && mv $LOCAL_DISABLED_OVERLAY_DIR/$2 $LOCAL_OVERLAY_DIR/$2
+	;;
+disable)
+	# display help
+	if [ "$2" = "help" ] ; then
+		echo 'Disable a package in local overlay without delete it'
+		echo 'Usage:'
+		echo ' localoverlay disable <full_package_name>'
+		echo 'Example:'
+		echo ' localoverlay disable game-arcade/supertux'
+		exit 0
+	fi
+	# not help
+	mkdir -p $(dirname $LOCAL_DISABLED_OVERLAY_DIR/$2)
+	[ -d $LOCAL_OVERLAY_DIR/$2 ] && mv $LOCAL_OVERLAY_DIR/$2 $LOCAL_DISABLED_OVERLAY_DIR/$2
+	;;
+*)
+	echo "Bad parameter" >&2
+	exit 1
+esac
