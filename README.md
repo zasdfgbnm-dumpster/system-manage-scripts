@@ -23,3 +23,23 @@ chroot前挂载脚本
 ------------------
 
 脚本名称：mount-chroot
+
+
+本地overlay管理脚本
+------------------
+
+脚本名称： localoverlay
+
+### 使用方法
+
+使用localoverlay help获取帮助
+
+
+hosts管理脚本
+-------------
+
+脚本名称：hosts
+
+### 使用方法
+
+更新hosts： hosts update
