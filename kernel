@@ -4,7 +4,7 @@ STORED_CONFIG_FILE=/root/kernel/config
 
 rebuild_post(){
 	# rebuild third party kernel modules
-	echo "nothing to do now" > /dev/null
+	emerge -1 bbswitch nvidia-drivers
 }
 
 case $1 in
