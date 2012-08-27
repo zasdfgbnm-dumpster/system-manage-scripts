@@ -24,11 +24,10 @@ rebuild)
 	rm /boot/config*
 	rm /boot/System.map*
 	rm -rf /lib/modules/*
-	# clean source directory
+	# copy kernel config file
+	cp "${STORED_CONFIG_FILE}" /usr/src/linux/.config
 	cp -rL /usr/src/linux /tmp/linux
 	cd /tmp/linux
-	# copy kernel config file
-	cp "${STORED_CONFIG_FILE}" .config
 	# build and install
 	make -j5
 	make install
@@ -39,6 +38,7 @@ rebuild)
 	# do rebuild_post
 	rebuild_post
 	rm -rf /tmp/linux
+	rm /usr/src/linux/.config
 	;;
 *)
 	echo "Bad parameter" >&2
