@@ -9,7 +9,8 @@ rebuild_post(){
 
 case $1 in
 config)
-	cd /usr/src/linux
+	cp -rL /usr/src/linux /tmp/linux
+	cd /tmp/linux
 	cp "${STORED_CONFIG_FILE}" .config
 	make oldconfig
 	make menuconfig 
@@ -23,8 +24,8 @@ rebuild)
 	rm /boot/System.map*
 	rm -rf /lib/modules/*
 	# clean source directory
-	cd /usr/src/linux
-	make mrproper
+	cp -rL /usr/src/linux /tmp/linux
+	cd /tmp/linux
 	# copy kernel config file
 	cp "${STORED_CONFIG_FILE}" .config
 	# build and install
@@ -32,6 +33,7 @@ rebuild)
 	make install
 	make modules_install
 	# regenerate grub.cfg
+	ln -s $(findmnt -ns / -o SOURCE) /dev/root #fix grub2-probe's error " cannot find a device for /"
 	grub2-mkconfig -o /boot/grub2/grub.cfg
 	# do rebuild_post
 	rebuild_post
