@@ -15,6 +15,7 @@ config)
 	make oldconfig
 	make menuconfig 
 	dialog --yesno "Use new config?" 5 20 && cp .config "${STORED_CONFIG_FILE}"
+	rm -rf /tmp/linux
 	clear
 	;;
 rebuild)
@@ -37,6 +38,7 @@ rebuild)
 	grub2-mkconfig -o /boot/grub2/grub.cfg
 	# do rebuild_post
 	rebuild_post
+	rm -rf /tmp/linux
 	;;
 *)
 	echo "Bad parameter" >&2
