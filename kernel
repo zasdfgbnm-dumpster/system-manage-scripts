@@ -32,6 +32,7 @@ rebuild)
 	make install
 	make modules_install
 	# regenerate grub.cfg
+	ln -s $(findmnt -n -s / -o SOURCE) /dev/root
 	grub2-mkconfig -o /boot/grub2/grub.cfg
 	# do rebuild_post
 	rebuild_post
