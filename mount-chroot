@@ -2,4 +2,5 @@
 mount -t proc none $1/proc
 mount -t sysfs none $1/sys
 mount -o bind /dev $1/dev
+cp /etc/resolv.conf $1/etc/resolv.conf
 chroot $1
